@@ -1,0 +1,25 @@
+jobs:
+- name: get
+  plan:
+  - get: yet-another-related-posts-plugin-wordpress-plugin
+    trigger: true
+resources:
+- name: yet-another-related-posts-plugin-wordpress-plugin
+  type: dynamic-metalink
+  source:
+    version_check: |
+      curl -s "https://api.wordpress.org/plugins/info/1.0/yet-another-related-posts-plugin.json" \
+        | jq -r '.versions | keys[]' \
+        | grep -v '^trunk$' \
+        | grep -E '^\d+\.\d+\.\d+$'
+    metalink_get: |
+      jq -n '
+        "yet-another-related-posts-plugin.\(env.version).zip" | {
+          "files": [
+            { "name": .,
+              "urls": [ { "url": "http://downloads.wordpress.org/plugin/\(.)" } ] } ] }'
+resource_types:
+- name: dynamic-metalink
+  type: docker-image
+  source:
+    repository: dpb587/dynamic-metalink-resource

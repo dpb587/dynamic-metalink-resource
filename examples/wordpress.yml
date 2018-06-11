@@ -1,0 +1,27 @@
+jobs:
+- name: get
+  plan:
+  - get: wordpress
+    trigger: true
+resources:
+- name: wordpress
+  type: dynamic-metalink
+  source:
+    version_check: |
+      git ls-remote --tags https://github.com/WordPress/WordPress.git \
+        | cut -f2 \
+        | grep -E '^refs/tags/.+$' \
+        | sed -E 's/^refs\/tags\/(.+)$/\1/' \
+        | grep -E '^\d+\.\d+\.\d+$'
+    metalink_get: |
+      jq -n --arg hash "$( curl -s https://wordpress.org/wordpress-${version}.tar.gz.sha1 )" '
+        "wordpress-\(env.version).tar.gz" | {
+          "files": [
+            { "name": .,
+              "urls": [ { "url": "https://downloads.wordpress.org/release/\(.)" } ],
+              "hashes": [ { "type": "sha-1", "hash": $hash } ] } ] }'
+resource_types:
+- name: dynamic-metalink
+  type: docker-image
+  source:
+    repository: dpb587/dynamic-metalink-resource

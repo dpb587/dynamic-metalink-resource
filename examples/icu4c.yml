@@ -1,0 +1,32 @@
+jobs:
+- name: get
+  plan:
+  - get: icu4c
+    trigger: true
+resources:
+- name: icu4c
+  type: dynamic-metalink
+  source:
+    version_check: |
+      curl -s http://source.icu-project.org/repos/icu/tags/ \
+        | sed -E 's/.+ name="([^"]+)".+/\1/' \
+        | grep -E "^release-" \
+        | sed -E 's/^release-(.+)$/\1/' \
+        | tr '-' '.' \
+        | grep -E '^\d+\.\d+(\.\d+)?$'
+    metalink_get: |
+      underversion=$( echo "$version" | tr . _ )
+      export name="icu4c-${underversion}-src.tgz"
+      export md5=$( curl -s "https://ssl.icu-project.org/files/icu4c/${version}/icu4c-src-${underversion}.md5" | grep "$name" | awk '{ print $1 }' )
+      jq -n '
+        env.name | {
+          "files": [
+            { "name": .,
+              "urls": [ { "url": "http://download.icu-project.org/files/icu4c/\(env.version)/\(.)" } ],
+              "hashes": [
+                { "type": "md5", "hash": env.md5 } ] } ] }'
+resource_types:
+- name: dynamic-metalink
+  type: docker-image
+  source:
+    repository: dpb587/dynamic-metalink-resource

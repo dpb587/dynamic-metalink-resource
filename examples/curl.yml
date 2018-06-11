@@ -1,0 +1,28 @@
+jobs:
+- name: get
+  plan:
+  - get: curl
+    trigger: true
+resources:
+- name: curl
+  type: dynamic-metalink
+  source:
+    version_check: |
+      git ls-remote --tags https://github.com/bagder/curl.git \
+        | cut -f2 \
+        | grep -v '\^{}' \
+        | grep -E '^refs/tags/curl-.+$' \
+        | sed -E 's/^refs\/tags\/curl-(.+)$/\1/' \
+        | tr '_' '.' \
+        | grep -E '^\d+\.\d+\.\d+$'
+    metalink_get: |
+      jq -n '
+        "curl-\(env.version).tar.gz" | {
+          "files": [
+            { "name": .,
+              "urls": [ { "url": "http://curl.askapache.com/download/\(.)" } ] } ] }'
+resource_types:
+- name: dynamic-metalink
+  type: docker-image
+  source:
+    repository: dpb587/dynamic-metalink-resource

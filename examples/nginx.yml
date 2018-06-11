@@ -1,0 +1,103 @@
+jobs:
+- name: get
+  plan:
+  - get: nginx
+    trigger: true
+resources:
+- name: nginx
+  type: dynamic-metalink
+  source:
+    version_check: |
+      curl -s http://hg.nginx.org/nginx/tags?style=raw \
+        | cut -f1 \
+        | grep '^release-' \
+        | sed -E 's/^release-(.+)$/\1/'
+    metalink_get: |
+      export signature="$( curl -s "http://nginx.org/download/nginx-${version}.tar.gz.asc" )"
+      jq -n '
+        "nginx-\(env.version).tar.gz" | {
+          "files": [
+            { "name": .,
+              "urls": [ { "url": "https://nginx.org/download/\(.)" } ],
+              "signature": {
+                "mediatype": "application/pgp-signature",
+                "signature": env.signature
+              } } ] }'
+    signature_trust_store: |
+      -----BEGIN PGP PUBLIC KEY BLOCK-----
+      Version: GnuPG v1.4.11 (FreeBSD)
+      Source: http://nginx.org/keys/is.key
+
+      mQGiBEqhKBQRBACyOVW0cliZfreT5AEPoXtZPZ6E8GUEkik8PUBskDkNxGh0Jgdj
+      CDYcJfd/ugTmhfZMB72essKaX9GauSVQCwcQn2AYX/zzGAcS5817xHcp9LPofGoF
+      0tvH5kS9I+OEVLsfmXkLvLcQBvwU2NtKRLAlRxVy4gi0ZBOwlbS+4s7y3wCgjQA2
+      uIWVxNMJ300VycFiAPlddXcD/2R+KbLHSNLxRMXzrXmuTELdg9Xl1lvXo/DSCj6s
+      JeL9Hurto1VVFsrkFLdFxBIv3PxILx25PrOaEnKyJACKu0LVr4WSPoY58tPHoyzj
+      M+pkvqrE+bcYD1frBVId0AsbS9+Y1RXaNLM8TNzDs/AVJmRUcuHoeW4QhCPKDWOd
+      6LYBBACJoSjoWCba1xfWqQkZuX0MZeMJSliUmMii+FU2gB1NCPbEHQnr6DaOu9Ot
+      a+2BOOoMaO6wZBuFqBrW74tyCmpkQDBBJMedf3TQwTzL3eCrbDuws86R4yMqQo/2
+      QksB0ItrBTezD0n39dkCnhiB0MFVPqt3OcWaiFpFdOhW6EhBmbQcSWdvciBTeXNv
+      ZXYgPGlnb3JAc3lzb2V2LnJ1PohGBBARAgAGBQJOTlzdAAoJEOzw6QssFyCDWEkA
+      oJPIUQzB/YTW2sBQ+CVmjKQXAWIQAJ9j/uCjOaaB6NZP6TH8sqMYctyui4hgBBMR
+      AgAgBQJKoSgUAhsDBgsJCAcDAgQVAggDBBYCAwECHgECF4AACgkQqTdhOaUkxT5E
+      jACdFlnCTBEnDk7zAareC47UqKI9sOIAoIfI08Rss0JkCqGS7uMGfjNOqzsYiQEc
+      BBABAgAGBQJOl+2xAAoJEKZP1bF62zmoFEEH/Rv21ibzUZ8ZReWp9wvD4lK6C1Fr
+      OuJbcX4F3Fd2OzrkmEW2lcwXkIPGtiNfDHjJaibj8Zqk32IjBSYMlxhECCEyWyS4
+      vfC0nulpLIPL486A1YGFyFQu2UWDtWNBPJrJ64rciX4oNwZxy6yIY+rRsPA+gKPi
+      wWtfXBY4RUvz+rMLnpPytSsKFzqbk1wI3TA0W72B+pki0r0T7eTnaseq66Wj4kGh
+      L8RYBepKFT8QHgEsyG9lRp8a/IMup4RVDGPoxl4RL0EjGhd6xCf+n32PTtNyLPVe
+      jUBiSfz1NaGhyUtQothEDgziCOvbQyrF8Tt26dBbrM0DqEWsqQh6st3AfLy5Ag0E
+      SqEoFBAIAM3cVw9XvxdaZQkxzAYKUsIxFuMvIxfiSNZmWe/IJZKBxlnJXtiHi2DY
+      BzCkobmsx4SY12EEazrX7gmlvQecOxcR/Fe6mFc+4HCbA9iYMQuAGSdv+G+a0X1G
+      PItCbMx8362b1jL2cUH3q0DFLUFS09Mvu3ZFT0TSvDHVLgeZdenJLLhHfiTTW9Oj
+      3hmFGUDRKIX+AMEY0AARqPmebvtAgKK92TF8FaC1OfwGTkkpACULhkwWAo+l53kP
+      b7paz9q8GJwAi2grA3lV4RF/AZ1n/G2z49pTe7v4iSiFkgIvSDX7YqqIrpxJd19G
+      a8VZ6RxACdAzhdrnz61GWzVm4Lbgti8AAwcIAI5C3Wtdo6tj9Xe/XTfW4gVvVD/y
+      dr+57hDjjpil0j5+v6BGrZ/OA4uee8wADR/OXGJVP6nKtVaY1h54ProAjG8fIZhF
+      SLokq7QVtFY8yyV7oAVAhB0vDE545d5TcTP29Wu6huJ7x94PQ2wuYmGV76m/05+3
+      sTrfPRVe4d8uW238UPxUMFdT7XQ9lDS0bskkYgDOWKk+iZ5HPe5tuK3aUl1QN6TZ
+      5qaprppB8+CxM2R7BFZD1pU0WicRGqPPhtnXKfuh/DOSBcQPw+dIjsKqXcyde1iE
+      pVfrZ1V5YpxVckTU+Zg5VrBhfez7Vazxt8f+rRVXcLKbZ1Z5KquqdrUzhkCISQQY
+      EQIACQUCSqEoFAIbDAAKCRCpN2E5pSTFPvnqAKCKuPJRzq+NTHlsyLiJhM8tQe43
+      ZgCeLScMWL6OD4W8wUkcEnEuw+6So80=
+      =bMVt
+      -----END PGP PUBLIC KEY BLOCK-----
+      -----BEGIN PGP PUBLIC KEY BLOCK-----
+      Version: GnuPG v1.4.11 (FreeBSD)
+      Source: http://nginx.org/keys/mdounin.key
+
+      mQENBE7SKu8BCADQo6x4ZQfAcPlJMLmL8zBEBUS6GyKMMMDtrTh3Yaq481HB54oR
+      0cpKL05Ff9upjrIzLD5TJUCzYYM9GQOhguDUP8+ZU9JpSz3yO2TvH7WBbUZ8FADf
+      hblmmUBLNgOWgLo3W+FYhl3mz1GFS2Fvid6Tfn02L8CBAj7jxbjL1Qj/OA/WmLLc
+      m6BMTqI7IBlYW2vyIOIHasISGiAwZfp0ucMeXXvTtt14LGa8qXVcFnJTdwbf03AS
+      ljhYrQnKnpl3VpDAoQt8C68YCwjaNJW59hKqWB+XeIJ9CW98+EOAxLAFszSyGanp
+      rCqPd0numj9TIddjcRkTA/ZbmCWK+xjpVBGXABEBAAG0IU1heGltIERvdW5pbiA8
+      bWRvdW5pbkBtZG91bmluLnJ1PokBOAQTAQIAIgUCTtIq7wIbAwYLCQgHAwIGFQgC
+      CQoLBBYCAwECHgECF4AACgkQUgqZk6HAUvj+iwf/b4FS6zVzJ5T0v1vcQGD4ZzXe
+      D5xMC4BJW414wVMU15rfX7aCdtoCYBNiApPxEd7SwiyxWRhRA9bikUq87JEgmnyV
+      0iYbHZvCvc1jOkx4WR7E45t1Mi29KBoPaFXA9X5adZkYcOQLDxa2Z8m6LGXnlF6N
+      tJkxQ8APrjZsdrbDvo3HxU9muPcq49ydzhgwfLwpUs11LYkwB0An9WRPuv3jporZ
+      /XgI6RfPMZ5NIx+FRRCjn6DnfHboY9rNF6NzrOReJRBhXCi6I+KkHHEnMoyg8XET
+      9lVkfHTOl81aIZqrAloX3/00TkYWyM2zO9oYpOg6eUFCX/Lw4MJZsTcT5EKVxIhG
+      BBARAgAGBQJO01Y/AAoJEOzw6QssFyCDVyQAn3qwTZlcZgyyzWu9Cs8gJ0CXREaS
+      AJ92QjGLT9DijTcbB+q9OS/nl16Z/IhGBBARAgAGBQJO02JDAAoJEKk3YTmlJMU+
+      P64AnjCKEXFelSVMtgefJk3+vpyt3QX1AKCH9M3MbTWPeDUL+MpULlfdyfvjj7kB
+      DQRO0irvAQgA0LjCc8S6oZzjiap2MjRNhRFA5BYjXZRZBdKF2VP74avt2/RELq8G
+      W0n7JWmKn6vvrXabEGLyfkCngAhTq9tJ/K7LPx/bmlO5+jboO/1inH2BTtLiHjAX
+      vicXZk3oaZt2Sotx5mMI3yzpFQRVqZXsi0LpUTPJEh3oS8IdYRjslQh1A7P5hfCZ
+      wtzwb/hKm8upODe/ITUMuXeWfLuQj/uEU6wMzmfMHb+jlYMWtb+v98aJa2FODeKP
+      mWCXLa7bliXp1SSeBOEfIgEAmjM6QGlDx5sZhr2Ss2xSPRdZ8DqD7oiRVzmstX1Y
+      oxEzC0yXfaefC7SgM0nMnaTvYEOYJ9CH3wARAQABiQEfBBgBAgAJBQJO0irvAhsM
+      AAoJEFIKmZOhwFL4844H/jo8icCcS6eOWvnen7lg0FcCo1fIm4wW3tEmkQdchSHE
+      CJDq7pgTloN65pwB5tBoT47cyYNZA9eTfJVgRc74q5cexKOYrMC3KuAqWbwqXhkV
+      s0nkWxnOIidTHSXvBZfDFA4Idwte94Thrzf8Pn8UESudTiqrWoCBXk2UyVsl03gJ
+      blSJAeJGYPPeo+Yj6m63OWe2+/S2VTgmbPS/RObn0Aeg7yuff0n5+ytEt2KL51gO
+      QE2uIxTCawHr12PsllPkbqPk/PagIttfEJqn9b0CrqPC3HREePb2aMJ/Ctw/76CO
+      wn0mtXeIXLCTvBmznXfaMKllsqbsy2nCJ2P2uJjOntw=
+      =Tavt
+      -----END PGP PUBLIC KEY BLOCK-----
+resource_types:
+- name: dynamic-metalink
+  type: docker-image
+  source:
+    repository: dpb587/dynamic-metalink-resource

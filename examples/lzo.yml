@@ -1,0 +1,24 @@
+jobs:
+- name: get
+  plan:
+  - get: lzo
+    trigger: true
+resources:
+- name: lzo
+  type: dynamic-metalink
+  source:
+    version_check: |
+      curl -s http://www.oberhumer.com/opensource/lzo/download/ \
+        | grep -E 'href="lzo-[^"]+.tar.gz"' \
+        | sed -E 's/^.+href="lzo-([^"]+).tar.gz".+$/\1/'
+    metalink_get: |
+      jq -n '
+        "lzo-\(env.version).tar.gz" | {
+          "files": [
+            { "name": .,
+              "urls": [ { "url": "https://www.oberhumer.com/opensource/lzo/download/\(.)" } ] } ] }'
+resource_types:
+- name: dynamic-metalink
+  type: docker-image
+  source:
+    repository: dpb587/dynamic-metalink-resource
